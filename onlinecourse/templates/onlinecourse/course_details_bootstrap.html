@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Online Course</a>
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ml-auto">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <span class="navbar-text text-white mr-2">Welcome, {{ user.username }}</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'onlinecourse:logout' %}">Logout</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'onlinecourse:login' %}">Login</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            {% if course.image %}
+            <img src="{{ course.image.url }}" class="img-fluid mb-3 rounded" alt="{{ course.name }}">
+            {% endif %}
+            <h2>{{ course.name }}</h2>
+            <p class="lead">{{ course.description }}</p>
+            <p class="text-muted">Published: {{ course.pub_date }}</p>
+        </div>
+        <div class="col-md-4">
+            {% if user.is_authenticated %}
+            {% if not is_enrolled %}
+            <a href="{% url 'onlinecourse:enroll' course.id %}" class="btn btn-success btn-block mb-3">Enroll Now</a>
+            {% else %}
+            <div class="alert alert-success">You are enrolled in this course.</div>
+            {% endif %}
+            {% else %}
+            <a href="{% url 'onlinecourse:login' %}" class="btn btn-primary btn-block mb-3">Login to Enroll</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lessons Section -->
+    <div class="mt-4">
+        <h3>Course Lessons</h3>
+        <div class="list-group">
+            {% for lesson in course.lesson_set.all %}
+            <div class="list-group-item">
+                <h5 class="mb-1">Lesson {{ lesson.order }}: {{ lesson.title }}</h5>
+                <p class="mb-1">{{ lesson.content }}</p>
+            </div>
+            {% empty %}
+            <p class="text-muted">No lessons available yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Exam Section -->
+    {% if is_enrolled %}
+    <div class="mt-5">
+        <h3>Course Exam</h3>
+        <form method="post" action="{% url 'onlinecourse:submit' course.id %}">
+            {% csrf_token %}
+            {% for question in course.question_set.all %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <strong>Question {{ forloop.counter }}:</strong> {{ question.question_text }}
+                    <span class="badge badge-info float-right">{{ question.grade }} pts</span>
+                </div>
+                <div class="card-body">
+                    {% for choice in question.choice_set.all %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               name="choice_{{ question.id }}_{{ choice.id }}"
+                               value="{{ choice.id }}"
+                               id="choice_{{ choice.id }}">
+                        <label class="form-check-label" for="choice_{{ choice.id }}">
+                            {{ choice.choice_text }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No exam questions for this course.</p>
+            {% endfor %}
+            {% if course.question_set.all %}
+            <button type="submit" class="btn btn-primary btn-lg">Submit Exam</button>
+            {% endif %}
+        </form>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

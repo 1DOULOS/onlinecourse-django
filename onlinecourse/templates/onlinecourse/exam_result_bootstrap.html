@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Result</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Online Course</a>
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ml-auto">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <span class="navbar-text text-white mr-2">Welcome, {{ user.username }}</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'onlinecourse:logout' %}">Logout</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2>Exam Result: {{ course.name }}</h2>
+
+    {% if total_score >= 80 %}
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Congratulations!</h4>
+        <p>You passed the exam with a score of <strong>{{ total_score }}%</strong>.</p>
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">Keep Trying!</h4>
+        <p>Your score is <strong>{{ total_score }}%</strong>. You need 80% to pass.</p>
+    </div>
+    {% endif %}
+
+    <h4>Your Score: {{ total_score }} / 100</h4>
+
+    <hr>
+    <h4>Exam Review</h4>
+
+    {% for question in questions %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>{{ question.question_text }}</strong>
+            {% if question.is_get_score selected_ids %}
+            <span class="badge badge-success">Correct — {{ question.grade }} pts</span>
+            {% else %}
+            <span class="badge badge-danger">Incorrect — 0 pts</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% for choice in question.choice_set.all %}
+            <div class="form-check">
+                {% if choice.id in selected_ids %}
+                    {% if choice.is_correct %}
+                    <span class="text-success">&#10003;</span>
+                    {% else %}
+                    <span class="text-danger">&#10007;</span>
+                    {% endif %}
+                {% else %}
+                    {% if choice.is_correct %}
+                    <span class="text-warning">&#9675;</span>
+                    {% else %}
+                    <span class="text-muted">&#9675;</span>
+                    {% endif %}
+                {% endif %}
+                <label class="form-check-label
+                    {% if choice.is_correct %} text-success font-weight-bold{% endif %}
+                    {% if choice.id in selected_ids and not choice.is_correct %} text-danger{% endif %}">
+                    {{ choice.choice_text }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <a href="{% url 'onlinecourse:course_details' course.id %}" class="btn btn-secondary mb-4">Back to Course</a>
+</div>
+</body>
+</html>

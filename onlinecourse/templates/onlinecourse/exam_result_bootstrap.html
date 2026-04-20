@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Result</title>
+    <title>Exam Result - {{ course.name }}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -29,51 +29,45 @@
     {% if total_score >= 80 %}
     <div class="alert alert-success">
         <h4 class="alert-heading">Congratulations!</h4>
-        <p>You passed the exam with a score of <strong>{{ total_score }}%</strong>.</p>
+        <p>You passed the exam with a score of <strong>{{ total_score }}</strong> out of 100.</p>
     </div>
     {% else %}
     <div class="alert alert-danger">
         <h4 class="alert-heading">Keep Trying!</h4>
-        <p>Your score is <strong>{{ total_score }}%</strong>. You need 80% to pass.</p>
+        <p>Your score is <strong>{{ total_score }}</strong> out of 100. You need 80 to pass.</p>
     </div>
     {% endif %}
 
-    <h4>Your Score: {{ total_score }} / 100</h4>
+    <h4 class="mb-3">Your Score: <span class="badge badge-primary">{{ total_score }} / 100</span></h4>
 
     <hr>
     <h4>Exam Review</h4>
 
-    {% for question in questions %}
+    {% for qr in question_results %}
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>{{ question.question_text }}</strong>
-            {% if question.is_get_score selected_ids %}
-            <span class="badge badge-success">Correct — {{ question.grade }} pts</span>
+            <strong>Q{{ forloop.counter }}: {{ qr.question.question_text }}</strong>
+            {% if qr.got_score %}
+            <span class="badge badge-success">Correct &mdash; {{ qr.question.grade }} pts</span>
             {% else %}
-            <span class="badge badge-danger">Incorrect — 0 pts</span>
+            <span class="badge badge-danger">Incorrect &mdash; 0 pts</span>
             {% endif %}
         </div>
         <div class="card-body">
-            {% for choice in question.choice_set.all %}
-            <div class="form-check">
-                {% if choice.id in selected_ids %}
-                    {% if choice.is_correct %}
-                    <span class="text-success">&#10003;</span>
-                    {% else %}
-                    <span class="text-danger">&#10007;</span>
-                    {% endif %}
+            {% for item in qr.choices %}
+            <div class="mb-1">
+                {% if item.selected and item.choice.is_correct %}
+                    <span class="text-success font-weight-bold">&#10003; {{ item.choice.choice_text }}</span>
+                    <small class="text-success">(your answer — correct)</small>
+                {% elif item.selected and not item.choice.is_correct %}
+                    <span class="text-danger">&#10007; {{ item.choice.choice_text }}</span>
+                    <small class="text-danger">(your answer — wrong)</small>
+                {% elif not item.selected and item.choice.is_correct %}
+                    <span class="text-warning">&#9651; {{ item.choice.choice_text }}</span>
+                    <small class="text-warning">(correct answer — not selected)</small>
                 {% else %}
-                    {% if choice.is_correct %}
-                    <span class="text-warning">&#9675;</span>
-                    {% else %}
-                    <span class="text-muted">&#9675;</span>
-                    {% endif %}
+                    <span class="text-muted">&#9675; {{ item.choice.choice_text }}</span>
                 {% endif %}
-                <label class="form-check-label
-                    {% if choice.is_correct %} text-success font-weight-bold{% endif %}
-                    {% if choice.id in selected_ids and not choice.is_correct %} text-danger{% endif %}">
-                    {{ choice.choice_text }}
-                </label>
             </div>
             {% endfor %}
         </div>

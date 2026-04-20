@@ -100,18 +100,32 @@ def submit(request, course_id):
 
 
 def show_exam_result(request, course_id, submission_id):
-    context = {}
     course = get_object_or_404(Course, pk=course_id)
     submission = get_object_or_404(Submission, pk=submission_id)
-    selected_ids = submission.choices.values_list('id', flat=True)
+    selected_ids = list(submission.choices.values_list('id', flat=True))
     questions = course.question_set.all()
     total_score = 0
+    question_results = []
     for question in questions:
-        if question.is_get_score(selected_ids):
+        got_score = question.is_get_score(selected_ids)
+        if got_score:
             total_score += question.grade
-    context['course'] = course
-    context['submission'] = submission
-    context['selected_ids'] = selected_ids
-    context['questions'] = questions
-    context['total_score'] = total_score
+        question_results.append({
+            'question': question,
+            'got_score': got_score,
+            'choices': [
+                {
+                    'choice': c,
+                    'selected': c.id in selected_ids,
+                }
+                for c in question.choice_set.all()
+            ]
+        })
+    context = {
+        'course': course,
+        'submission': submission,
+        'selected_ids': selected_ids,
+        'question_results': question_results,
+        'total_score': total_score,
+    }
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
